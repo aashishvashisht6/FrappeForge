@@ -1,4 +1,4 @@
-# Frappe / ERPNext v15 — Custom Docker Setup
+# FrappeForge — Production Docker Setup for Frappe / ERPNext v15
 
 Production-ready Docker Compose stack for Frappe Framework and ERPNext v15, with host Nginx as a reverse proxy. Nginx is intentionally excluded from the compose stack — your host Nginx proxies into it.
 
@@ -58,8 +58,8 @@ Startup order: `mariadb` + `redis_*` → `configurator` (one-shot) → all app c
 ### Step 1 — Clone and configure environment
 
 ```bash
-git clone <your-repo-url> frappe_customdocker
-cd frappe_customdocker
+git clone <your-repo-url> FrappeForge
+cd FrappeForge
 
 cp env.example .env
 ```
