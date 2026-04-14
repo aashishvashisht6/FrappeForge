@@ -216,8 +216,8 @@ RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
 COPY --chown=frappe:frappe custom_apps /home/frappe/custom_apps/
 
 # Uncomment and duplicate for each custom app:
-RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
-    bench get-app file:///home/frappe/custom_apps/easy_pos --resolve-deps
+# RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
+#     bench get-app file:///home/frappe/custom_apps/easy_pos --resolve-deps
 
 # ---------------------------------------------------------------------------
 # 14. Build frontend assets (add --app flag for each custom app with assets)
@@ -226,7 +226,7 @@ RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=10
     bench build \
         --app frappe \
         --app erpnext \
-        --app easy_pos \
+        # --app easy_pos \
         --force
 # Add: --app your_app_name  for any custom app with JS/CSS assets
 
