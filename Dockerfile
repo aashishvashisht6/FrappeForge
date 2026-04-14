@@ -227,7 +227,7 @@ RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=10
         --app frappe \
         --app erpnext \
         # --app easy_pos \
-        --force
+        --force --hard-link && chmod -R 755 /home/frappe/frappe-bench/sites/assets
 # Add: --app your_app_name  for any custom app with JS/CSS assets
 
 # ---------------------------------------------------------------------------
