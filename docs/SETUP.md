@@ -125,8 +125,7 @@ Uncomment the relevant lines in **`Dockerfile`** (steps 13 and 14):
 ```dockerfile
 # Step 13 — install the app
 RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
-    bench get-app file:///home/frappe/custom_apps/your_custom_app --resolve-deps
-
+    bench get-app file:///home/frappe/custom_apps/your_custom_app
 # Step 14 — add --app your_custom_app to the bench build command
 RUN bench build --app frappe --app erpnext --app your_custom_app --force
 ```
