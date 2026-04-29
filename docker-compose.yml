@@ -294,20 +294,20 @@ services:
 # =============================================================================
 volumes:
   sites:
-    name: frappe_v15_sites
+    name: ${VOLUME_SITES:-frappe_v15_sites}
   logs:
-    name: frappe_v15_logs
+    name: ${VOLUME_LOGS:-frappe_v15_logs}
   mariadb_data:
-    name: frappe_v15_mariadb
+    name: ${VOLUME_MARIADB:-frappe_v15_mariadb}
   redis_cache_data:
-    name: frappe_v15_redis_cache
+    name: ${VOLUME_REDIS_CACHE:-frappe_v15_redis_cache}
   redis_queue_data:
-    name: frappe_v15_redis_queue
+    name: ${VOLUME_REDIS_QUEUE:-frappe_v15_redis_queue}
 
 # =============================================================================
 # Network — isolated bridge; only backend and socketio are exposed to host
 # =============================================================================
 networks:
   frappe-net:
-    name: frappe-net
+    name: ${NETWORK_NAME:-frappe-net}
     driver: bridge
