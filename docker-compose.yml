@@ -81,7 +81,6 @@ services:
   # ---------------------------------------------------------------------------
   configurator:
     <<: *frappe-app
-    container_name: frappe_configurator
     restart: "no"
     entrypoint: ["bash", "-c"]
     command:
@@ -121,7 +120,6 @@ services:
   # ---------------------------------------------------------------------------
   backend:
     <<: [*frappe-app, *app-depends]
-    container_name: frappe_backend
     restart: unless-stopped
     command:
       - /home/frappe/frappe-bench/env/bin/gunicorn
@@ -147,7 +145,6 @@ services:
   # ---------------------------------------------------------------------------
   socketio:
     <<: [*frappe-app, *app-depends]
-    container_name: frappe_socketio
     restart: unless-stopped
     command:
       - node
@@ -165,7 +162,6 @@ services:
   # ---------------------------------------------------------------------------
   worker_short:
     <<: [*frappe-app, *app-depends]
-    container_name: frappe_worker_short
     restart: unless-stopped
     command: bench worker --queue short,default
 
@@ -178,7 +174,6 @@ services:
   # ---------------------------------------------------------------------------
   worker_long:
     <<: [*frappe-app, *app-depends]
-    container_name: frappe_worker_long
     restart: unless-stopped
     command: bench worker --queue long,default,short
 
@@ -191,7 +186,6 @@ services:
   # ---------------------------------------------------------------------------
   scheduler:
     <<: [*frappe-app, *app-depends]
-    container_name: frappe_scheduler
     restart: unless-stopped
     command: bench schedule
 
@@ -205,7 +199,6 @@ services:
   # ---------------------------------------------------------------------------
   redis_cache:
     image: redis:7-alpine
-    container_name: frappe_redis_cache
     restart: unless-stopped
     volumes:
       - redis_cache_data:/data
@@ -227,7 +220,6 @@ services:
   # ---------------------------------------------------------------------------
   redis_queue:
     image: redis:7-alpine
-    container_name: frappe_redis_queue
     restart: unless-stopped
     volumes:
       - redis_queue_data:/data
@@ -246,7 +238,6 @@ services:
   # ---------------------------------------------------------------------------
   mariadb:
     image: mariadb:10.6
-    container_name: frappe_mariadb
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
