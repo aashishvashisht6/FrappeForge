@@ -58,7 +58,7 @@ Startup order: `mariadb` + `redis_*` → `configurator` (one-shot) → all app c
 ### Step 1 — Clone and configure environment
 
 ```bash
-git clone <your-repo-url> FrappeForge
+git clone https://github.com/aashishvashisht6/FrappeForge FrappeForge
 cd FrappeForge
 
 cp env.example .env
@@ -70,6 +70,9 @@ Edit `.env` and set the required values:
 # Image name produced by docker build
 CUSTOM_IMAGE=frappe-erpnext-v15
 IMAGE_TAG=latest
+
+# Docker Compose project name — prefixes all container and network names
+COMPOSE_PROJECT_NAME=frappe
 
 # Your actual domain — becomes the site folder name AND the MariaDB database name
 FRAPPE_SITE_NAME=erp.mycompany.com
@@ -87,7 +90,7 @@ BACKEND_PORT=8000
 SOCKETIO_PORT=9000
 ```
 
-> **MariaDB note:** `DB_HOST`, `DB_PORT`, `DB_USER`, `REDIS_*` usually do not need changing.
+> **Note:** `DB_HOST`, `DB_PORT`, `DB_USER`, `REDIS_*`, `VOLUME_*`, and `NETWORK_NAME` usually do not need changing for a single bench setup.
 
 ---
 
@@ -240,29 +243,33 @@ docker compose down -v       # ⚠ also deletes all data volumes
 
 ## Container Reference
 
+Container names follow the Docker Compose v2 pattern `{COMPOSE_PROJECT_NAME}-{service}-1`. With the default `COMPOSE_PROJECT_NAME=frappe`:
+
 | Container | Image | Port (host) | Purpose |
 |-----------|-------|-------------|---------|
-| `frappe_configurator` | custom | — | One-shot: writes `common_site_config.json` |
-| `frappe_backend` | custom | `127.0.0.1:8000` | Gunicorn WSGI server |
-| `frappe_socketio` | custom | `127.0.0.1:9000` | Node.js Socket.IO |
-| `frappe_worker_short` | custom | — | Short/default queue worker |
-| `frappe_worker_long` | custom | — | Long/default queue worker |
-| `frappe_scheduler` | custom | — | Frappe beat scheduler |
-| `frappe_redis_cache` | redis:7-alpine | — | Cache (allkeys-lru) |
-| `frappe_redis_queue` | redis:7-alpine | — | Job queue + pub/sub (AOF) |
-| `frappe_mariadb` | mariadb:10.6 | — | Database (internal only) |
+| `frappe-configurator-1` | custom | — | One-shot: writes `common_site_config.json` |
+| `frappe-backend-1` | custom | `127.0.0.1:8000` | Gunicorn WSGI server |
+| `frappe-socketio-1` | custom | `127.0.0.1:9000` | Node.js Socket.IO |
+| `frappe-worker_short-1` | custom | — | Short/default queue worker |
+| `frappe-worker_long-1` | custom | — | Long/default queue worker |
+| `frappe-scheduler-1` | custom | — | Frappe beat scheduler |
+| `frappe-redis_cache-1` | redis:7-alpine | — | Cache (allkeys-lru) |
+| `frappe-redis_queue-1` | redis:7-alpine | — | Job queue + pub/sub (AOF) |
+| `frappe-mariadb-1` | mariadb:10.6 | — | Database (internal only) |
 
 ---
 
 ## Named Volumes
 
-| Volume | Purpose |
-|--------|---------|
-| `frappe_v15_sites` | Frappe sites directory (site configs, files, assets) |
-| `frappe_v15_logs` | Bench logs |
-| `frappe_v15_mariadb` | MariaDB data directory |
-| `frappe_v15_redis_cache` | Redis cache data |
-| `frappe_v15_redis_queue` | Redis queue data (AOF persistence) |
+Volume names are configurable via `VOLUME_*` variables in `.env`. Defaults:
+
+| Volume (`VOLUME_*` key) | Default name | Purpose |
+|-------------------------|--------------|---------|
+| `VOLUME_SITES` | `frappe_v15_sites` | Frappe sites directory (site configs, files, assets) |
+| `VOLUME_LOGS` | `frappe_v15_logs` | Bench logs |
+| `VOLUME_MARIADB` | `frappe_v15_mariadb` | MariaDB data directory |
+| `VOLUME_REDIS_CACHE` | `frappe_v15_redis_cache` | Redis cache data |
+| `VOLUME_REDIS_QUEUE` | `frappe_v15_redis_queue` | Redis queue data (AOF persistence) |
 
 ---
 
@@ -299,7 +306,7 @@ worker_short:
 
 **Configurator fails on first start**
 - Check MariaDB and Redis are healthy: `docker compose ps`
-- Inspect logs: `docker compose logs configurator`
+- Inspect logs: `docker compose logs -f configurator`
 
 **Site not found / 404 after creation**
 - Ensure `FRAPPE_SITE_NAME` in `.env` matches the domain you used in `bench new-site`
