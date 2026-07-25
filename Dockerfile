@@ -240,7 +240,6 @@ RUN echo "{}" > /home/frappe/frappe-bench/sites/common_site_config.json
 # ---------------------------------------------------------------------------
 VOLUME [ \
     "/home/frappe/frappe-bench/sites", \
-    "/home/frappe/frappe-bench/sites/assets", \
     "/home/frappe/frappe-bench/logs" \
 ]
 
