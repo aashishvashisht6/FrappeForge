@@ -4,6 +4,12 @@ This guide walks you through setting up **Frappe / ERPNext v15** using Docker an
 
 > Tested primarily on **Ubuntu**, but the Docker portion works identically on any Linux distribution. Only the host-level package-install commands (Docker, Nginx, Certbot) differ by distro.
 
+> **Prefer automation?** [`scripts/setup.sh`](../scripts/setup.sh) runs every step below for you — dependency install (any major distro), `.env` generation, Frappe/ERPNext version selection (14/15/16), custom apps, build, site creation, Nginx (including `/assets`), and SSL:
+> ```bash
+> ./scripts/setup.sh --domain erp.mycompany.com --frappe-version 15
+> ```
+> The manual walkthrough below is for when you want full control over each step, or need to adapt something the script doesn't cover.
+
 ---
 
 ## Prerequisites
@@ -137,24 +143,27 @@ VOLUME_REDIS_QUEUE=frappe_v15_redis_queue
 
 ### Step 4 — Add your custom app (optional)
 
-If you have a custom Frappe app, clone it into a `custom_apps/` directory:
+Custom apps are fetched directly from git **during the image build** — no local clone needed. Set `CUSTOM_APPS` in `.env` to a semicolon-separated list of `git_url|branch` pairs (branch is optional):
+
+```dotenv
+CUSTOM_APPS=https://github.com/your-org/your_custom_app|version-15
+```
+
+For more than one app, separate them with `;`:
+
+```dotenv
+CUSTOM_APPS=https://github.com/your-org/app_one|version-15;https://github.com/your-org/app_two|
+```
+
+The Dockerfile's build step reads `CUSTOM_APPS` and runs `bench get-app` for each entry, then `bench build` picks up assets for every app that was fetched — nothing else to edit. `scripts/setup.sh` fills this in for you interactively (it asks "Add a custom app?" in a loop) and also detects the exact app names to pass to `bench new-site --install-app` when creating the site, so mismatched repo-name-vs-app-name is never an issue.
+
+**Private github.com repos:** do *not* embed a token in the URL (`https://<token>@github.com/...`) — `CUSTOM_APPS` is a plain Docker build arg, and its value gets baked into `docker history` and the build cache permanently, leaking the credential. Instead, export `GITHUB_TOKEN` and it's passed to the build as a BuildKit secret, only ever present in the one `RUN` step that needs it, never written to any layer:
 
 ```bash
-mkdir -p custom_apps
-cd custom_apps
-git clone https://github.com/your-org/your_custom_app custom_app && cd ..
+GITHUB_TOKEN=ghp_your_token_here docker compose build
 ```
 
-Then uncomment the relevant lines in **`Dockerfile`** (steps 13 and 14):
-
-```dockerfile
-# Step 13 — install the app
-RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
-    bench get-app file:///home/frappe/custom_apps/your_custom_app
-
-# Step 14 — add --app your_custom_app to the bench build command
-RUN bench build --app frappe --app erpnext --app your_custom_app --force
-```
+`scripts/setup.sh` prompts for this automatically (hidden input) when you say a custom app needs a private repo, or accept it via `--github-token`.
 
 ### Step 5 — Build the Docker image
 
@@ -186,7 +195,7 @@ docker compose exec backend \
     erp.company.com
 ```
 
-To also install a custom app at site creation time, append `--install-app your_custom_app`.
+To also install a custom app at site creation time, append `--install-app <app_name>` (find the exact app name with `docker compose exec backend ls apps`).
 
 ### Step 8 — Configure host Nginx
 

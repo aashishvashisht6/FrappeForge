@@ -46,9 +46,17 @@ x-frappe-env: &frappe-env
 x-frappe-app: &frappe-app
   image: ${CUSTOM_IMAGE:-frappe-erpnext-v15}:${IMAGE_TAG:-latest}
   user: frappe
-  build:           
+  build:
     context: .
     dockerfile: Dockerfile
+    args:
+      FRAPPE_BRANCH: ${FRAPPE_BRANCH:-version-15}
+      ERPNEXT_BRANCH: ${ERPNEXT_BRANCH:-version-15}
+      PYTHON_VERSION: ${PYTHON_VERSION:-3.12}
+      NODE_VERSION: ${NODE_VERSION:-22.14.0}
+      CUSTOM_APPS: ${CUSTOM_APPS:-}
+    secrets:
+      - github_token
   working_dir: /home/frappe/frappe-bench
   environment:
     <<: *frappe-env
@@ -282,10 +290,21 @@ services:
 
 # =============================================================================
 # Named volumes
+#
+# `sites` is bind-mounted to a host directory (SITES_HOST_PATH) rather than a
+# plain Docker-managed volume, so host Nginx can serve /assets directly from
+# sites/assets/ without proxying static files through Gunicorn — see the
+# `location /assets` block in frappe-nginx.conf. The host directory must
+# exist before `docker compose up` (scripts/setup.sh creates it for you).
 # =============================================================================
 volumes:
   sites:
     name: ${VOLUME_SITES:-frappe_v15_sites}
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${SITES_HOST_PATH:-./volumes/sites}
   logs:
     name: ${VOLUME_LOGS:-frappe_v15_logs}
   mariadb_data:
@@ -302,3 +321,13 @@ networks:
   frappe-net:
     name: ${NETWORK_NAME:-frappe-net}
     driver: bridge
+
+# =============================================================================
+# Build secrets — sourced from the GITHUB_TOKEN env var at build time only
+# (never written to .env or any compose file), for fetching private custom
+# apps. See the "Custom apps" comment on the Dockerfile's step 13 for how
+# it's consumed. Safe to leave GITHUB_TOKEN unset for public-only repos.
+# =============================================================================
+secrets:
+  github_token:
+    environment: GITHUB_TOKEN
